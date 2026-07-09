@@ -1,6 +1,6 @@
 import { useState } from "react";
 
-const ANTHROPIC_API_KEY = import.meta.env.VITE_ANTHROPIC_API_KEY;
+
 
 const DIMENSIONS = [
   {
@@ -42,39 +42,14 @@ const FREQ_MULTIPLIERS = { Daily: 250, Weekly: 50, Monthly: 12, Quarterly: 4 };
 
 // ─── API CALL ──────────────────────────────────────────────────────────────────
 async function checkStandardApps(description) {
-  const prompt = `You are an SAP S/4HANA Fiori expert. A user has described a UI customisation requirement. Your job is to check whether a standard SAP Fiori application already covers this need.
-
-User requirement: "${description}"
-
-Respond ONLY with a valid JSON object — no markdown, no backticks, no extra text. Use this exact structure:
-{
-  "matchLevel": "HIGH" or "MEDIUM" or "LOW",
-  "matchedApp": "App name and ID if found, or null",
-  "appCovers": "What the standard app covers (2-3 sentences)",
-  "remainingGap": "What gap remains if any, or null",
-  "recommendation": "One clear sentence recommending action",
-  "suggestQ1Yes": true or false
-}`;
-
-  const response = await fetch("https://api.anthropic.com/v1/messages", {
+  const response = await fetch("/api/match", {
     method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "x-api-key": ANTHROPIC_API_KEY,
-      "anthropic-version": "2023-06-01",
-      "anthropic-dangerous-direct-browser-access": "true",
-    },
-    body: JSON.stringify({
-      model: "claude-sonnet-4-6",
-      max_tokens: 1000,
-      messages: [{ role: "user", content: prompt }],
-    }),
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ description }),
   });
 
-  const data = await response.json();
-  const text = data.content?.[0]?.text || "";
-  const clean = text.replace(/```json|```/g, "").trim();
-  return JSON.parse(clean);
+  if (!response.ok) throw new Error("Matcher unavailable");
+  return await response.json();
 }
 
 // ─── SCORE RING ────────────────────────────────────────────────────────────────
