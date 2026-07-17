@@ -79,7 +79,7 @@ function ScoreRing({ score, size = 120 }) {
 }
 
 // ─── AI APP MATCHER ────────────────────────────────────────────────────────────
-function AppMatcher({ description, onSuggestQ1 }) {
+function AppMatcher({ description, onSuggestQ1, onResult }) {
   const [result, setResult] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -92,6 +92,7 @@ function AppMatcher({ description, onSuggestQ1 }) {
     try {
       const data = await checkStandardApps(description);
       setResult(data);
+      onResult?.(data);
       if (data.suggestQ1Yes) onSuggestQ1?.();
     } catch (e) {
       setError("Could not reach AI matcher. Check your API key.");
@@ -290,6 +291,7 @@ function ScreenInput({ onNext }) {
   const [scores, setScores] = useState({ d1: 0, d2: 0, d3: 0, d4: 0 });
   const [bizAdv, setBizAdv] = useState({ timeSaved: "", usersAffected: "", frequency: "Daily" });
   const [q1Suggested, setQ1Suggested] = useState(false);
+  const [matcherResult, setMatcherResult] = useState(null);
 
   const composite = DIMENSIONS.reduce((sum, d) => sum + (scores[d.id] || 0) * 20 * d.weight, 0);
   const allFilled = form.description && form.businessUnit && form.devDays && Object.values(scores).every((v) => v > 0);
@@ -325,7 +327,7 @@ function ScreenInput({ onNext }) {
         </div>
 
         {/* AI App Matcher */}
-        <AppMatcher description={form.description} onSuggestQ1={() => setQ1Suggested(true)} />
+       <AppMatcher description={form.description} onSuggestQ1={() => setQ1Suggested(true)} onResult={setMatcherResult} />
 
         {q1Suggested && (
           <div style={{ marginBottom: 16, padding: "10px 14px", background: "#10B98110", border: "1px solid #10B98140", borderRadius: 8, color: "#10B981", fontSize: 12 }}>
@@ -349,7 +351,7 @@ function ScreenInput({ onNext }) {
           <DimensionSlider key={dim.id} dim={dim} value={scores[dim.id]} onChange={(v) => setScores({ ...scores, [dim.id]: v })} />
         ))}
 
-        <button onClick={() => allFilled && onNext({ form, scores, composite, bizAdv, annualValue })} disabled={!allFilled}
+        <button onClick={() => allFilled && onNext({ form, scores, composite, bizAdv, annualValue, matcherResult })} disabled={!allFilled}
           style={{ width: "100%", padding: "14px 0", background: allFilled ? "#3B82F6" : "#1E2D45", color: allFilled ? "#fff" : "#64748B", border: "none", borderRadius: 10, fontSize: 15, fontWeight: 700, cursor: allFilled ? "pointer" : "not-allowed", fontFamily: "Inter, sans-serif", transition: "all 0.2s", marginTop: 8 }}>
           Calculate Score →
         </button>
@@ -485,6 +487,8 @@ function ScreenPillar1({ data, onNext, onBack }) {
 
 // ─── SCREEN 3: PILLAR 2 TREE ───────────────────────────────────────────────────
 function ScreenPillar2({ data, onNext, onBack }) {
+  const { matcherResult } = data;
+  const suggestedAnswer = matcherResult ? (matcherResult.suggestQ1Yes ? "yes" : "no") : null;
   const [current, setCurrent] = useState("q1");
   const [history, setHistory] = useState([]);
   const [outcome, setOutcome] = useState(null);
@@ -536,9 +540,47 @@ function ScreenPillar2({ data, onNext, onBack }) {
           <div style={{ color: "#3B82F6", fontFamily: "JetBrains Mono, monospace", fontSize: 11, fontWeight: 700, letterSpacing: 2, marginBottom: 12 }}>{currentQ.label} · ACTIVE</div>
           <div style={{ color: "#E2E8F0", fontSize: 18, fontWeight: 600, lineHeight: 1.5, marginBottom: 8 }}>{currentQ.question}</div>
           <div style={{ color: "#64748B", fontSize: 12, fontStyle: "italic", marginBottom: 24 }}>{currentQ.theory}</div>
+
+          {currentQ.id === "q1" && matcherResult && (
+            <div style={{
+              marginBottom: 20, padding: "12px 16px",
+              background: "#10B98112", border: "1px solid #10B98150",
+              borderRadius: 10,
+            }}>
+              <div style={{ color: "#10B981", fontSize: 11, fontFamily: "JetBrains Mono, monospace", fontWeight: 700, letterSpacing: 1, marginBottom: 4 }}>
+                CARRIED FROM STEP 1 — {matcherResult.matchLevel} MATCH
+              </div>
+              <div style={{ color: "#E2E8F0", fontSize: 13, lineHeight: 1.5 }}>
+                Suggested answer: <strong style={{ color: suggestedAnswer === "yes" ? "#10B981" : "#EF4444" }}>{suggestedAnswer.toUpperCase()}</strong>
+                {matcherResult.matchedApp ? ` (${matcherResult.matchedApp})` : ""}. Confirm below or override if you disagree.
+              </div>
+            </div>
+          )}
           <div style={{ display: "flex", gap: 12 }}>
-            <button onClick={() => handleAnswer("yes")} style={{ flex: 1, padding: "14px 0", background: "#10B98120", border: "1px solid #10B981", color: "#10B981", borderRadius: 10, fontSize: 15, fontWeight: 700, cursor: "pointer", fontFamily: "Inter, sans-serif" }}>✓ Yes</button>
-            <button onClick={() => handleAnswer("no")} style={{ flex: 1, padding: "14px 0", background: "#EF444420", border: "1px solid #EF4444", color: "#EF4444", borderRadius: 10, fontSize: 15, fontWeight: 700, cursor: "pointer", fontFamily: "Inter, sans-serif" }}>✗ No</button>
+            <button onClick={() => handleAnswer("yes")} style={{
+              flex: 1, padding: "14px 0", position: "relative",
+              background: "#10B98120", border: "1px solid #10B981",
+              color: "#10B981", borderRadius: 10,
+              fontSize: 15, fontWeight: 700, cursor: "pointer",
+              fontFamily: "Inter, sans-serif",
+            }}>
+              ✓ Yes
+              {currentQ.id === "q1" && suggestedAnswer === "yes" && (
+                <span style={{ position: "absolute", top: -10, right: 8, background: "#10B981", color: "#0A0F1E", fontSize: 9, fontWeight: 700, padding: "2px 6px", borderRadius: 4 }}>SUGGESTED</span>
+              )}
+            </button>
+            <button onClick={() => handleAnswer("no")} style={{
+              flex: 1, padding: "14px 0", position: "relative",
+              background: "#EF444420", border: "1px solid #EF4444",
+              color: "#EF4444", borderRadius: 10,
+              fontSize: 15, fontWeight: 700, cursor: "pointer",
+              fontFamily: "Inter, sans-serif",
+            }}>
+              ✗ No
+              {currentQ.id === "q1" && suggestedAnswer === "no" && (
+                <span style={{ position: "absolute", top: -10, right: 8, background: "#EF4444", color: "#0A0F1E", fontSize: 9, fontWeight: 700, padding: "2px 6px", borderRadius: 4 }}>SUGGESTED</span>
+              )}
+            </button>
           </div>
         </div>
       )}
@@ -699,3 +741,6 @@ export default function App() {
     </div>
   );
 }
+
+
+
