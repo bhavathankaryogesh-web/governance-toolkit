@@ -541,7 +541,7 @@ function ScreenPillar2({ data, onNext, onBack }) {
           <div style={{ color: "#E2E8F0", fontSize: 18, fontWeight: 600, lineHeight: 1.5, marginBottom: 8 }}>{currentQ.question}</div>
           <div style={{ color: "#64748B", fontSize: 12, fontStyle: "italic", marginBottom: 24 }}>{currentQ.theory}</div>
 
-          {currentQ.id === "q1" && matcherResult && (
+         {currentQ.id === "q1" && matcherResult && (
             <div style={{
               marginBottom: 20, padding: "12px 16px",
               background: "#10B98112", border: "1px solid #10B98150",
@@ -550,10 +550,20 @@ function ScreenPillar2({ data, onNext, onBack }) {
               <div style={{ color: "#10B981", fontSize: 11, fontFamily: "JetBrains Mono, monospace", fontWeight: 700, letterSpacing: 1, marginBottom: 4 }}>
                 CARRIED FROM STEP 1 — {matcherResult.matchLevel} MATCH
               </div>
-              <div style={{ color: "#E2E8F0", fontSize: 13, lineHeight: 1.5 }}>
+              <div style={{ color: "#E2E8F0", fontSize: 13, lineHeight: 1.5, marginBottom: matcherResult.remainingGap ? 10 : 0 }}>
                 Suggested answer: <strong style={{ color: suggestedAnswer === "yes" ? "#10B981" : "#EF4444" }}>{suggestedAnswer.toUpperCase()}</strong>
                 {matcherResult.matchedApp ? ` (${matcherResult.matchedApp})` : ""}. Confirm below or override if you disagree.
               </div>
+              {matcherResult.remainingGap && (
+                <div style={{ borderTop: "1px solid #10B98130", paddingTop: 10 }}>
+                  <div style={{ color: "#F59E0B", fontSize: 10, fontFamily: "JetBrains Mono, monospace", fontWeight: 700, letterSpacing: 1, marginBottom: 4 }}>
+                    WHY NOT A FULL YES
+                  </div>
+                  <div style={{ color: "#CBD5E1", fontSize: 12, lineHeight: 1.5, fontStyle: "italic" }}>
+                    {matcherResult.remainingGap}
+                  </div>
+                </div>
+              )}
             </div>
           )}
           <div style={{ display: "flex", gap: 12 }}>
