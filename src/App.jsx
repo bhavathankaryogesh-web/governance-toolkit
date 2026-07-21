@@ -4,19 +4,20 @@ import { useState } from "react";
 
 const DIMENSIONS = [
   {
-    id: "d1", code: "D1", label: "Development Cost", weight: 0.30, color: "#3B82F6",
+    id: "d1", code: "D1", label: "Development Cost", weight: 0.25, color: "#8B5CF6",
+   
     descriptions: ["< 2 developer-days","2–5 developer-days","5–10 developer-days","10–20 developer-days","> 20 developer-days"],
   },
   {
-    id: "d2", code: "D2", label: "Integration Complexity", weight: 0.20, color: "#8B5CF6",
+    id: "d2", code: "D2", label: "Integration Complexity", weight: 0.25, color: "#8B5CF6",
     descriptions: ["Standard OData, no custom logic","Standard OData with light customisation","Custom CDS view, single source","Custom CDS with cross-module joins","Side-by-side BTP extension + custom CDS"],
   },
   {
-    id: "d3", code: "D3", label: "Upgrade Risk", weight: 0.30, color: "#F59E0B",
+    id: "d3", code: "D3", label: "Upgrade Risk", weight: 0.25, color: "#F59E0B",
     descriptions: ["Clean-core extension (SAP-approved)","Key-user extension via Fiori adaptation","Developer extension with public extension points","Modification touches standard objects (isolated)","Direct modification of standard SAP objects"],
   },
   {
-    id: "d4", code: "D4", label: "Lifecycle Maintenance", weight: 0.20, color: "#10B981",
+    id: "d4", code: "D4", label: "Lifecycle Maintenance", weight: 0.25, color: "#10B981",
     descriptions: ["< 10 hours per year","10–25 hours per year","25–50 hours per year","50–100 hours per year","> 100 hours per year"],
   },
 ];
@@ -26,7 +27,7 @@ const TREE_QUESTIONS = [
   { id: "q2", label: "Q2", question: "Can SAP configuration options (without custom code) close the gap?", theory: "TOE — Organisation: minimum change capacity", yes: "outcome-configure", no: "q3" },
   { id: "q3", label: "Q3", question: "Does this requirement represent a genuine competitive advantage — or is it a legacy habit?", theory: "UET — Executive cognitive base", yes: "q4", no: "outcome-developer" },
   { id: "q4", label: "Q4", question: "Is the Pillar 1 composite score below the RED threshold (≤ 70)?", theory: "Pillar 1 integration gate", yes: "q5", no: "outcome-keyuser" },
-  { id: "q5", label: "Q5", question: "Is a clean-core key-user extension technically feasible for this requirement?", theory: "TOE — Technology trajectory + Environment: SAP clean-core mandate", yes: "outcome-keyuser", no: "outcome-custom" },
+  { id: "q5", label: "Q5", question: "Is a clean-core key-user extension technically feasible for this requirement?", theory: "TOE — Technology trajectory + Environment: SAP clean-core mandate", note: "Verify independently where possible — practitioner interviews found this answer is sometimes overstated as \"infeasible\" to justify a preferred custom build.", yes: "outcome-keyuser", no: "outcome-custom" },
 ];
 
 const OUTCOMES = {
@@ -539,7 +540,16 @@ function ScreenPillar2({ data, onNext, onBack }) {
         <div style={{ background: "#0c1a2e", border: "1px solid #1e3a5f", borderRadius: 16, padding: 28, marginBottom: 16 }}>
           <div style={{ color: "#3B82F6", fontFamily: "JetBrains Mono, monospace", fontSize: 11, fontWeight: 700, letterSpacing: 2, marginBottom: 12 }}>{currentQ.label} · ACTIVE</div>
           <div style={{ color: "#E2E8F0", fontSize: 18, fontWeight: 600, lineHeight: 1.5, marginBottom: 8 }}>{currentQ.question}</div>
-          <div style={{ color: "#64748B", fontSize: 12, fontStyle: "italic", marginBottom: 24 }}>{currentQ.theory}</div>
+          <div style={{ color: "#64748B", fontSize: 12, fontStyle: "italic", marginBottom: currentQ.note ? 12 : 24 }}>{currentQ.theory}</div>
+          {currentQ.note && (
+            <div style={{
+              marginBottom: 20, padding: "10px 14px",
+              background: "#F59E0B12", border: "1px solid #F59E0B40",
+              borderRadius: 8, color: "#F59E0B", fontSize: 12, lineHeight: 1.5,
+            }}>
+              ⚠ {currentQ.note}
+            </div>
+          )}
 
          {currentQ.id === "q1" && matcherResult && (
             <div style={{
